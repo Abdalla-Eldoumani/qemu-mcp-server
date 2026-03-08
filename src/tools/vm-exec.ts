@@ -67,8 +67,9 @@ export function registerExecTools(
       vmId: z.string().describe("ID of the VM to monitor"),
       pattern: z
         .string()
+        .max(500)
         .describe(
-          "Text or regex pattern to wait for in the console output",
+          "Plain text to search for in the console output. Matched as a substring.",
         ),
       timeoutMs: z
         .number()
@@ -85,26 +86,11 @@ export function registerExecTools(
       const pollInterval = 500;
       const deadline = Date.now() + timeout;
 
-      let regex: RegExp;
-      try {
-        regex = new RegExp(params.pattern);
-      } catch {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Invalid regex pattern: "${params.pattern}". Provide a valid regular expression or plain text.`,
-            },
-          ],
-          isError: true,
-        };
-      }
-
       try {
         while (Date.now() < deadline) {
           const lines = vmManager.getConsoleOutput(params.vmId);
           for (let i = 0; i < lines.length; i++) {
-            if (regex.test(lines[i])) {
+            if (lines[i].includes(params.pattern)) {
               // Return the matching line with some surrounding context.
               const contextStart = Math.max(0, i - 3);
               const contextEnd = Math.min(lines.length, i + 4);
