@@ -24,15 +24,19 @@ brew install qemu
 ### 2. Install the server
 
 ```bash
-git clone <repo-url>
-cd qemu-mcp-server
-npm install
-npm run build
+npm install -g qemu-mcp-server
 ```
 
-Or, if published to npm:
+Or run without installing:
 ```bash
-npm install -g qemu-mcp-server
+npx qemu-mcp-server
+```
+
+Or from source:
+```bash
+git clone <repo-url>
+cd qemu-mcp-server
+npm install && npm run build
 ```
 
 The server checks for QEMU on startup and tells you exactly what to install if anything is missing.
@@ -44,8 +48,7 @@ The server checks for QEMU on startup and tells you exactly what to install if a
 {
   "mcpServers": {
     "qemu": {
-      "command": "node",
-      "args": ["/path/to/qemu-mcp-server/dist/index.js"]
+      "command": "qemu-mcp-server"
     }
   }
 }
@@ -56,8 +59,8 @@ The server checks for QEMU on startup and tells you exactly what to install if a
 {
   "mcpServers": {
     "qemu": {
-      "command": "node",
-      "args": ["/path/to/qemu-mcp-server/dist/index.js"]
+      "command": "npx",
+      "args": ["qemu-mcp-server"]
     }
   }
 }
@@ -65,10 +68,8 @@ The server checks for QEMU on startup and tells you exactly what to install if a
 
 **Claude Code**:
 ```bash
-claude mcp add qemu -- node /path/to/qemu-mcp-server/dist/index.js
+claude mcp add qemu -- npx qemu-mcp-server
 ```
-
-After publishing to npm, you can use `qemu-mcp-server` directly as the command instead of `node /path/to/...`.
 
 ### 4. Try it
 
