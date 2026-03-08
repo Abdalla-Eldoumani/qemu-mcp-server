@@ -19,7 +19,8 @@ export function registerSnapshotTools(
         .string()
         .min(1)
         .max(128)
-        .describe("Name for the snapshot. Must be unique within the VM."),
+        .regex(/^[a-zA-Z0-9_-]+$/, "Snapshot names may only contain letters, digits, hyphens, and underscores.")
+        .describe("Name for the snapshot. Must be unique within the VM. Letters, digits, hyphens, underscores only."),
     },
     async (params) => {
       try {
@@ -76,7 +77,7 @@ export function registerSnapshotTools(
     "Restore a virtual machine to a previously saved snapshot. Replaces current VM state with the snapshot state. The VM must have a snapshot with the given name.",
     {
       vmId: z.string().describe("ID of the VM to restore"),
-      name: z.string().min(1).describe("Name of the snapshot to load"),
+      name: z.string().min(1).max(128).regex(/^[a-zA-Z0-9_-]+$/, "Snapshot names may only contain letters, digits, hyphens, and underscores.").describe("Name of the snapshot to load"),
     },
     async (params) => {
       try {
@@ -133,7 +134,7 @@ export function registerSnapshotTools(
     "Delete a saved snapshot from a virtual machine. Frees the storage used by the snapshot. This cannot be undone.",
     {
       vmId: z.string().describe("ID of the VM owning the snapshot"),
-      name: z.string().min(1).describe("Name of the snapshot to delete"),
+      name: z.string().min(1).max(128).regex(/^[a-zA-Z0-9_-]+$/, "Snapshot names may only contain letters, digits, hyphens, and underscores.").describe("Name of the snapshot to delete"),
     },
     async (params) => {
       try {
