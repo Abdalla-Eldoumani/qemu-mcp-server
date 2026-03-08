@@ -1,5 +1,6 @@
 // MCP tool definitions for VM inspection: status, info, console, memory dump.
 
+import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { VmManager } from "../vm-manager.js";
@@ -166,17 +167,33 @@ export function registerInspectTools(
         .number()
         .int()
         .min(1)
-        .describe("Number of bytes to dump"),
+        .max(1048576)
+        .describe("Number of bytes to dump (max 1MB)"),
       filepath: z
         .string()
-        .describe("Absolute path on the host where the dump file will be written"),
+        .describe("File name for the dump (written to the VM temp directory)"),
     },
     async (params) => {
       try {
+        // Restrict dump output to the VM temp directory to prevent arbitrary writes.
+        const vm = vmManager.getVm(params.vmId);
+        const basename = path.basename(params.filepath);
+        if (!basename || basename !== params.filepath) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Invalid filepath "${params.filepath}". Provide a simple file name (no path separators). The file will be written to the VM temp directory.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        const safePath = path.join(path.dirname(vm.qmpSocketPath), basename);
         await vmManager.executeQmp(params.vmId, "pmemsave", {
           val: params.address,
           size: params.size,
-          filename: params.filepath,
+          filename: safePath,
         });
         return {
           content: [
@@ -187,7 +204,7 @@ export function registerInspectTools(
                   vmId: params.vmId,
                   address: params.address,
                   size: params.size,
-                  filepath: params.filepath,
+                  filepath: safePath,
                   status: "dumped",
                 },
                 null,
