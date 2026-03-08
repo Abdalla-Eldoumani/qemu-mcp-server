@@ -24,9 +24,10 @@ function createMockProcess(): ChildProcess {
 
 let mockProcess: ChildProcess;
 
-// Mock child_process.spawn to return our mock process.
+// Mock child_process.spawn and execFileSync.
 vi.mock("node:child_process", () => ({
   spawn: vi.fn(() => mockProcess),
+  execFileSync: vi.fn(() => "QEMU version 8.0.0"),
 }));
 
 // Mock QMP client with controllable connect and execute.
