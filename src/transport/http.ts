@@ -4,6 +4,9 @@ import { randomUUID } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import * as logger from "../utils/logger.js";
 
+// Max request body size: 1MB.
+const MAX_BODY_BYTES = 1_048_576;
+
 // Build an HTTP server that routes /mcp requests to the StreamableHTTP transport.
 export function createHttpTransport(port: number): {
   transport: StreamableHTTPServerTransport;
@@ -23,6 +26,14 @@ export function createHttpTransport(port: number): {
       return;
     }
 
+    // Reject oversized requests before processing.
+    const contentLength = parseInt(req.headers["content-length"] ?? "0", 10);
+    if (contentLength > MAX_BODY_BYTES) {
+      res.writeHead(413, { "Content-Type": "text/plain" });
+      res.end("Request body too large.");
+      return;
+    }
+
     try {
       await transport.handleRequest(req, res);
     } catch (err) {
@@ -33,6 +44,8 @@ export function createHttpTransport(port: number): {
       }
     }
   });
+
+  httpServer.maxHeadersCount = 50;
 
   httpServer.listen(port, () => {
     logger.info("HTTP transport listening", { port });
