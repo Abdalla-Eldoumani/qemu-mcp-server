@@ -1,5 +1,7 @@
 # qemu-mcp-server
 
+[![npm](https://img.shields.io/npm/v/qemu-mcp-server)](https://www.npmjs.com/package/qemu-mcp-server)
+
 An MCP server that gives AI agents direct control over QEMU virtual machines.
 
 Create, boot, snapshot, inspect, and destroy VMs through standard MCP tool calls. The server manages QEMU processes and communicates through QMP (QEMU Machine Protocol).
