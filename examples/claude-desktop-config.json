@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "qemu": {
+      "command": "qemu-mcp-server"
+    }
+  }
+}
