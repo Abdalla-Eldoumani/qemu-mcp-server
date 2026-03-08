@@ -1,6 +1,6 @@
 // Central VM manager. Spawns QEMU processes, connects QMP, tracks lifecycle.
 
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn, execFileSync, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { QmpClient } from "./qmp/client.js";
 import { type VmConfig, type VmInstance, type VmState, ARCH_CONFIG } from "./types.js";
@@ -8,6 +8,27 @@ import { generateVmId } from "./utils/id.js";
 import { TempManager } from "./utils/temp.js";
 import * as logger from "./utils/logger.js";
 import { getConfig } from "./config/index.js";
+
+// Check if a QEMU binary is available on PATH or in the configured directory.
+export function checkQemuAvailable(): { available: string[]; missing: string[] } {
+  const config = getConfig();
+  const available: string[] = [];
+  const missing: string[] = [];
+
+  for (const [arch, info] of Object.entries(ARCH_CONFIG)) {
+    const binary = config.qemuBinaryDir
+      ? path.join(config.qemuBinaryDir, info.binary)
+      : info.binary;
+    try {
+      execFileSync(binary, ["--version"], { stdio: "ignore" });
+      available.push(arch);
+    } catch {
+      missing.push(arch);
+    }
+  }
+
+  return { available, missing };
+}
 
 // How long to wait between QMP socket connection retries.
 const QMP_RETRY_DELAY_MS = 200;
@@ -31,6 +52,21 @@ export class VmManager {
   // Set up temp directories and register shutdown handlers.
   async init(): Promise<void> {
     if (this.initialized) return;
+
+    // Check that at least one QEMU binary is available.
+    const { available, missing } = checkQemuAvailable();
+    if (available.length === 0) {
+      throw new Error(
+        "No QEMU binaries found. Install QEMU and make sure it is on your PATH.\n" +
+          "  Ubuntu/Debian: sudo apt install qemu-system-arm qemu-system-x86\n" +
+          "  macOS: brew install qemu\n" +
+          "  Or set QEMU_BINARY_DIR to the directory containing QEMU binaries."
+      );
+    }
+    if (missing.length > 0) {
+      logger.warn("Some QEMU architectures are not available.", { missing, available });
+    }
+    logger.info("QEMU binaries found.", { available });
 
     await this.tempManager.init();
     this.initialized = true;
@@ -58,15 +94,24 @@ export class VmManager {
       );
     }
 
-    const vmId = generateVmId();
-    await this.tempManager.createVmDir(vmId);
-    const socketPath = this.tempManager.getSocketPath(vmId);
     const archConfig = ARCH_CONFIG[config.arch];
 
-    // Build the QEMU binary path.
+    // Build the QEMU binary path and verify it exists.
     const binary = serverConfig.qemuBinaryDir
       ? path.join(serverConfig.qemuBinaryDir, archConfig.binary)
       : archConfig.binary;
+
+    try {
+      execFileSync(binary, ["--version"], { stdio: "ignore" });
+    } catch {
+      throw new Error(
+        `QEMU binary "${binary}" not found. Install qemu-system-${config.arch} and make sure it is on your PATH.`
+      );
+    }
+
+    const vmId = generateVmId();
+    await this.tempManager.createVmDir(vmId);
+    const socketPath = this.tempManager.getSocketPath(vmId);
 
     // Build the command line arguments.
     const args: string[] = [
