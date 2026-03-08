@@ -101,24 +101,6 @@ The agent will call `create_vm`, wait for output, read the console, and report b
 - `send_console_input` -- Type into the serial console
 - `wait_for_console_output` -- Wait for expected text in output
 
-## Example: bare-metal ARM program
-
-You can boot a custom kernel or bare-metal binary. The `test-arm/` directory has a working example:
-
-```bash
-# Cross-compile (needs aarch64-linux-gnu-as and ld)
-cd test-arm
-aarch64-linux-gnu-as -o hello.o hello.s
-aarch64-linux-gnu-ld -T link.ld -o hello.elf hello.o
-aarch64-linux-gnu-objcopy -O binary hello.elf hello.bin
-```
-
-Then ask your agent:
-
-> "Create an aarch64 VM with 128MB memory using /path/to/hello.bin as the kernel, wait a second, then read the console."
-
-The agent will see "Hello from ARM!" printed by the bare-metal program writing to the PL011 UART.
-
 ## Example: booting a Linux kernel
 
 If you have a Linux kernel image and root filesystem:
