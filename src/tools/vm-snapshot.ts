@@ -31,11 +31,14 @@ export function registerSnapshotTools(
         );
         const output = typeof result === "string" ? result : "";
         if (output && output.trim().length > 0) {
+          const hint = output.includes("No block device supports snapshots")
+            ? " The VM was created without a qcow2 disk image. Snapshots require a disk: create_vm with a diskImage parameter."
+            : "";
           return {
             content: [
               {
                 type: "text" as const,
-                text: `Snapshot may have failed: ${output.trim()}`,
+                text: `Snapshot failed: ${output.trim()}${hint}`,
               },
             ],
             isError: true,
