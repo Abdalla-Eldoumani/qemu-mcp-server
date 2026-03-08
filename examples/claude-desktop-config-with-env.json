@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "qemu": {
+      "command": "qemu-mcp-server",
+      "env": {
+        "MAX_VMS": "5",
+        "LOG_LEVEL": "debug",
+        "QMP_TIMEOUT_MS": "60000"
+      }
+    }
+  }
+}
