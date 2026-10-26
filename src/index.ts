@@ -8,6 +8,7 @@ import { registerAllResources } from "./resources/index.js";
 import { getConfig } from "./config/index.js";
 import { createTransport } from "./transport/index.js";
 import { setLevel } from "./utils/logger.js";
+import { stripToolSchemaDialect } from "./utils/schema-dialect.js";
 import * as logger from "./utils/logger.js";
 
 // Boot the server, register tools and resources, connect transport.
@@ -26,6 +27,7 @@ async function main(): Promise<void> {
   });
 
   registerAllTools(server, vmManager);
+  stripToolSchemaDialect(server);
   registerAllResources(server, vmManager);
 
   const { transport, httpServer } = createTransport();
